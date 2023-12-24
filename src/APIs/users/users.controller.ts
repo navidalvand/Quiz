@@ -1,14 +1,13 @@
 import {
   Controller,
-  Get,
   Post,
-  Param,
   Body,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
+import { LoginUserDto } from './dto/login-user.dto';
 
 @Controller('users')
 export class UsersController {
@@ -16,13 +15,13 @@ export class UsersController {
 
   @Post('/create')
   @UsePipes(new ValidationPipe())
-  create(@Body() body: CreateUserDto) {
-    console.log(body);
-    return this.usersService.create();
+  create(@Body() userData: CreateUserDto) {
+    return this.usersService.create(userData);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.usersService.findOne(+id);
+  @Post('/login')
+  @UsePipes(new ValidationPipe())
+  login(@Body() loginInfo: LoginUserDto) {
+    return this.usersService.login(loginInfo);
   }
 }

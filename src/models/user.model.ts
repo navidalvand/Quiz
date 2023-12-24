@@ -1,19 +1,24 @@
-import { Prop, Schema } from '@nestjs/mongoose';
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 
 @Schema()
-export class UserSchema {
-  @Prop({ unique: true, required: true, type: String })
+export class User {
+  @Prop({ required: true, unique: true, type: String })
   username: string;
 
-  @Prop({ unique: true, required: true, type: String })
+  @Prop({ required: true, unique: true, type: String })
   email: string;
 
   @Prop({ required: true, type: String })
   password: string;
 
-  @Prop({ unique: true, required: false, type: String })
+  @Prop({ type: String, default: '' })
   phone?: string;
 
-  @Prop()
-  games: { win: number; lost: number };
+  @Prop({ default: 'default.jpg' })
+  avatar: string;
+
+  @Prop({ default: 0 })
+  score: number;
 }
+
+export const UserSchema = SchemaFactory.createForClass(User);

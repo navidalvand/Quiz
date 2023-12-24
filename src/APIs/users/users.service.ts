@@ -1,24 +1,76 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpException,
+  HttpStatus,
+  Injectable,
+} from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { User } from 'src/models/user.model';
+import { CreateUserType } from './types/create-user.type';
+import { LoginUserType } from './types/login-user.type';
 
 @Injectable()
 export class UsersService {
-  create() {
-    return 'This action adds a new user';
+  constructor(@InjectModel(User.name) private userModel: Model<User>) {}
+
+  async create(userData: CreateUserType) {
+    try {
+      const { confirm_password, email, password, username, phone } = userData;
+
+      if (password !== confirm_password)
+        return new BadRequestException({
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: 'password and confirm_password must be the same',
+        });
+
+      const user = await this.userModel.create({
+        username,
+        password,
+        email,
+        phone,
+      });
+
+      if (!user)
+        return new BadRequestException({
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: 'cannot create the user',
+        });
+
+      return { message: 'user created', statusCode: HttpStatus.CREATED, user };
+    } catch (error) {
+      return new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
-  findAll() {
-    return `This action returns all users`;
-  }
+  async login(loginData: LoginUserType) {
+    try {
+      console.log(loginData);
+      const { password, usernameOrEmail } = loginData;
 
-  findOne(id: number) {
-    return `This action returns a #${id} user`;
-  }
+      const checkUsernameOrEmail = await this.userModel.findOne({
+        $or: [{ username: usernameOrEmail }, { email: usernameOrEmail }],
+      });
 
-  update(id: number) {
-    return `This action updates a #${id} user`;
-  }
+      if (!checkUsernameOrEmail)
+        return new BadRequestException({
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: 'username or password is wrong',
+        });
 
-  remove(id: number) {
-    return `This action removes a #${id} user`;
+      if (password !== checkUsernameOrEmail.password)
+        return new BadRequestException({
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: 'username or password is wrong',
+        });
+
+      return {
+        message: 'logged in',
+        user: checkUsernameOrEmail,
+        statusCode: HttpStatus.OK,
+      };
+    } catch (error) {
+      return new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 }
